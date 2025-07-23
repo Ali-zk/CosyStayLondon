@@ -1,0 +1,37 @@
+{% extends 'dashboard/admin/base_admin.html' %}
+
+{% block title %}Cart Form{% endblock %}
+
+{% block page_title %}Cart Form{% endblock %}
+
+{% block main_content %}
+    <h2 class="text-2xl font-bold mb-6 text-gray-800">Cart</h2>
+    <form method="post" class="bg-white p-8 rounded-lg shadow-xl">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {# Assuming 'form' context variable is passed by Django's CreateView/UpdateView #}
+            {# Iterate over form fields, excluding hidden fields like 'id' if any #}
+            {% for field in form %}
+                {% if field.widget.input_type != 'hidden' %}
+                    <div>
+                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
+                        {{ field }} {# This renders the Django form field with its default widget #}
+                        {% if field.help_text %}
+                            <p class="mt-1 text-sm text-gray-500">{{ field.help_text }}</p>
+                        {% endif %}
+                        {% if field.errors %}
+                            <p class="text-red-500 text-xs italic mt-1">
+                                {% for error in field.errors %}{{ error }}{% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <div class="mt-8 flex space-x-4">
+            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200 ease-in-out shadow-md">Save</button>
+            <a href="{% url 'dashboard:admin:cart-list' %}" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out shadow-md">Back to List</a>
+        </div>
+    </form>
+{% endblock %}

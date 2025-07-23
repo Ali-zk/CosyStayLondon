@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+        integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style type="text/tailwindcss">
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+
+<!-- Pass cart data as JSON script -->
+{{ cart_items_json|json_script:"cart-items-data" }}
+
+<body class="bg-gray-50" x-data="bookingCart()">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-8 text-center">Your Cart</h1>
+
+        <div class="px-4 py-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <div class="lg:col-span-2">
+                    <div class="space-y-4">
+                        <template x-for="(item, index) in cartItems" :key="item.id">
+                            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                                <div class="flex">
+                                    <div class="w-32 h-24 flex-shrink-0">
+                                        <img :src="item.image || '/static/images/placeholder.jpg'" :alt="item.title" class="w-full h-full object-cover">
+                                    </div>
+                                    
+                                    <div class="flex-1 p-4">
+                                        <div class="flex justify-between items-start">
+                                            <div class="flex-1">
+                                                <h3 class="text-lg font-semibold text-gray-800 mb-1" x-text="item.title"></h3>
+                                                <div class="flex items-center text-sm text-gray-600 mb-2">
+                                                    <i class="fa-solid fa-location-dot text-pink-500 mr-1"></i>
+                                                    <span x-text="item.location"></span>
+                                                </div>
+                                                
+                                                <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-2">
+                                                    <div class="flex items-center">
+                                                        <i class="fa-solid fa-calendar mr-1"></i>
+                                                        <span x-text="formatDate(item.checkin) + ' - ' + formatDate(item.checkout)"></span>
+                                                    </div>
+                                                    <div class="flex items-center">
+                                                        <i class="fa-solid fa-users mr-1"></i>
+                                                        <span x-text="item.guests + ' Guests'"></span>
+                                                    </div>
+                                                    <div class="flex items-center">
+                                                        <i class="fa-solid fa-moon mr-1"></i>
+                                                        <span x-text="item.nights + ' Nights'"></span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="flex items-center justify-between">
+                                                    <div class="text-lg font-semibold text-pink-700">
+                                                        £<span x-text="item.totalPrice"></span>
+                                                    </div>
+                                                    <button @click="removeItem(item.id, index)"
+                                                            class="text-red-500 hover:text-red-700 transition-colors">
+                                                        <i class="fa-solid fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div x-show="cartItems.length === 0" class="bg-white rounded-2xl shadow-lg p-8 text-center">
+                            <i class="fa-solid fa-shopping-cart text-gray-300 text-6xl mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-600 mb-2">Your cart is empty</h3>
+                            <p class="text-gray-500 mb-6">Add some properties to your cart to get started</p>
+                            <a href="{% url 'shop:product_list' %}"
+                                    class="bg-gradient-to-r from-pink-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all duration-200">
+                                Browse Properties
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-1" x-show="cartItems.length > 0">
+                    <div class="bg-white rounded-2xl shadow-lg p-6 sticky top-4">
+                        <h2 class="text-xl font-bold text-gray-800 mb-6">Booking Summary</h2>
+                        
+                        <div class="space-y-3 mb-6">
+                            <template x-for="(item, index) in cartItems" :key="item.id">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">
+                                        <span x-text="item.title.length > 25 ? item.title.substring(0, 22) + '...' : item.title"></span>
+                                        <br>
+                                        <span class="text-xs text-gray-500" x-text="'£' + item.pricePerNight + ' × ' + item.nights + ' nights'"></span>
+                                    </span>
+                                    <span class="text-gray-800 font-medium">£<span x-text="item.totalPrice"></span></span>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="flex justify-between font-semibold text-gray-800 mb-4">
+                            <span>Subtotal</span>
+                            <span>£<span x-text="subtotal.toFixed(2)"></span></span>
+                        </div>
+
+                        <div class="mb-6">
+                            <div class="flex">
+                                <input type="text" x-model="discountCode" placeholder="Discount Code"
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                                <button @click="applyDiscount()"
+                                        class="bg-gray-200 text-gray-700 px-4 py-2 rounded-r-lg hover:bg-gray-300 transition-colors">
+                                    Apply
+                                </button>
+                            </div>
+                            <p x-show="discountApplied" class="text-green-600 text-sm mt-2">Discount Applied!</p>
+                        </div>
+            
+                        <div class="border-t pt-4 mb-6">
+                            <div class="flex justify-between text-sm text-gray-600 mb-2" x-show="discount > 0">
+                                <span>Discount</span>
+                                <span>- £<span x-text="discount.toFixed(2)"></span></span>
+                            </div>
+                            <div class="flex justify-between font-bold text-lg">
+                                <span>Total</span>
+                                <span class="text-pink-700">£<span x-text="total.toFixed(2)"></span></span>
+                            </div>
+                        </div>
+
+                        <form id="checkoutForm" method="POST" action="{% url 'cart:checkout' %}" class="space-y-4">
+                            {% csrf_token %}
+                            <div>
+                                <label for="full_name" class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                                <input type="text" id="full_name" name="full_name" x-model="contactInfo.name" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                       placeholder="Enter your full name" value="{{ billing_full_name }}">
+                            </div>
+
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                                <input type="email" id="email" name="email" x-model="contactInfo.email" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                       placeholder="Enter your email" value="{{ billing_email }}">
+                            </div>
+
+                            <div>
+                                <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone *</label>
+                                <input type="tel" id="phone" name="phone" x-model="contactInfo.phone" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                       placeholder="Enter your phone number" value="{{ billing_phone }}">
+                            </div>
+
+                            <button type="submit" 
+                                    class="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white py-3 rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl">
+                                Proceed to Checkout
+                            </button>
+                        </form>
+
+                        <p class="text-xs text-gray-500 text-center mt-4">
+                            You won't be charged until confirmation
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function bookingCart() {
+            return {
+                cartItems: [],
+                discountCode: '',
+                discountApplied: false,
+                discount: 0,
+                contactInfo: {
+                    name: '{{ billing_full_name|default:"" }}',
+                    email: '{{ billing_email|default:"" }}',
+                    phone: '{{ billing_phone|default:"" }}'
+                },
+                
+                init() {
+                    // Load cart data from Django JSON script
+                    const cartDataElement = document.getElementById('cart-items-data');
+                    if (cartDataElement) {
+                        try {
+                            this.cartItems = JSON.parse(cartDataElement.textContent);
+                            console.log('Cart items loaded:', this.cartItems);
+                        } catch (e) {
+                            console.error('Error parsing cart data:', e);
+                            this.cartItems = [];
+                        }
+                    } else {
+                        console.log('No cart data found');
+                        this.cartItems = [];
+                    }
+                },
+
+                get subtotal() {
+                    return this.cartItems.reduce((total, item) => {
+                        const price = parseFloat(item.totalPrice) || 0;
+                        return total + price;
+                    }, 0);
+                },
+                
+                get total() {
+                    return Math.max(0, this.subtotal - this.discount);
+                },
+                
+                formatDate(dateString) {
+                    try {
+                        const date = new Date(dateString);
+                        return date.toLocaleDateString('en-GB', { 
+                            day: '2-digit', 
+                            month: 'short',
+                            year: 'numeric'
+                        });
+                    } catch (e) {
+                        return dateString; // Return original if parsing fails
+                    }
+                },
+                
+                removeItem(itemId, index) {
+                    if (confirm('Are you sure you want to remove this item?')) {
+                        // Send POST request to Django to remove item
+                        fetch('/cart/remove-item/' + itemId + '/', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                                'Content-Type': 'application/json'
+                            },
+                        })
+                        .then(response => {
+                            if (response.ok) {
+                                // If successful, remove from Alpine.js array
+                                this.cartItems.splice(index, 1);
+                                // Reset discount if cart is empty
+                                if (this.cartItems.length === 0) {
+                                    this.discount = 0;
+                                    this.discountApplied = false;
+                                }
+                                // Reload the page to ensure Django messages are shown and state is fresh
+                                window.location.reload();
+                            } else {
+                                alert('Failed to remove item. Please try again.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error removing item:', error);
+                            alert('An error occurred while removing the item.');
+                        });
+                    }
+                },
+                
+                applyDiscount() {
+                    if (this.discountCode.toLowerCase() === 'welcome10') {
+                        this.discount = Math.round(this.subtotal * 0.1 * 100) / 100; // Round to 2 decimal places
+                        this.discountApplied = true;
+                    } else if (this.discountCode.toLowerCase() === 'save20') {
+                        this.discount = Math.round(this.subtotal * 0.2 * 100) / 100; // Round to 2 decimal places
+                        this.discountApplied = true;
+                    } else if (this.discountCode.trim() !== '') {
+                        alert('Invalid discount code');
+                        this.discountApplied = false;
+                        this.discount = 0;
+                    }
+                },
+            }
+        }
+    </script>
+</body>
+
+</html>
+{% endblock %}

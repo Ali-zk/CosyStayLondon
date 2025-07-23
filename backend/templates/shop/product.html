@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <div class="px-4 pb-20">
+        <h1 class="text-center text-4xl font-bold mt-4 text-pink-700">lorem</h1>
+        <p class="text-justify mt-2 ">Lorem ipsum dolor sit amet consectetur adipisicing elit. Reiciendis est quia deleniti enim voluptatum tempora cumque voluptates quam excepturi similique soluta beatae explicabo perferendis laboriosam, eos minus error. Quo, sed!</p>
+        
+        <!-- Properties Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+            <!-- Property 1 - Luxury Apartment -->
+
+            <!-- Property 5 - Luxury Hotel -->
+            {# shop/product.html #}
+
+
+                {% for house in houses %}
+                    {# اینجاست که قطعه کد شما باید قرار بگیره #}
+                    <div class="bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 group">
+                        <div class="relative overflow-hidden">
+                            {% if house.images.first %}
+                                <img src="{{ house.images.first.image.url }}"
+                                     alt="{{ house.title }}"
+                                     class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                            {% else %}
+                                <img src="https://via.placeholder.com/400x300?text=No+Image+Available"
+                                     alt="No image available"
+                                     class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                            {% endif %}
+                        </div>
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-3">
+                                <h3 class="text-xl font-bold text-gray-800">{{ house.title }}</h3>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-4 leading-relaxed">
+                                {{ house.description|truncatechars:150 }}
+                            </p>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <span class="text-2xl font-bold text-pink-700">{{ house.price_per_night|floatformat:0 }}</span>
+                                    <span class="text-gray-500 text-sm">/night</span>
+                                </div>
+                                <a href="{% url 'shop:product_detail' pk=house.pk %}"
+                                   class="bg-gradient-to-r from-pink-600 to-purple-600 text-white px-6 py-2 rounded-full hover:from-pink-700 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl">
+                                    Book Now
+                                </a>
+                            </div>
+                            <div class="flex items-center mt-3 text-gray-500 text-sm">
+                                <i class="fa-solid fa-location-dot text-pink-500 mr-2"></i>
+                                {{ house.location }}{% if house.address %}, {{ house.address }}{% endif %}
+                            </div>
+                            <div class="flex items-center mt-2 text-gray-500 text-sm">
+                                <i class="fa-solid fa-bed text-pink-500 mr-2"></i> {{ house.number_of_beds }} beds &nbsp;
+                                <i class="fa-solid fa-bath text-pink-500 mr-2"></i> {{ house.number_of_baths}} baths
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            </div>
+        </section>
+    </div>
+</body>
+
+</html>
+{% endblock content %}

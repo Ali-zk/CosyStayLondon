@@ -1,0 +1,17 @@
+{% extends 'dashboard/admin/base_admin.html' %}
+
+{% block title %}Delete Order Item{% endblock %}
+
+{% block page_title %}Confirm Order Item Deletion{% endblock %}
+
+{% block main_content %}
+    <h2 class="text-2xl font-bold mb-6 text-gray-800">Confirm Order Item Deletion</h2>
+    <div class="bg-white p-8 rounded-lg shadow-xl">
+        <p class="text-gray-700 text-lg mb-6">Are you sure you want to delete the order item for "{{ orderitem.property_item.title|default:"Deleted Property" }}" (Order ID: {{ orderitem.order.id }})?</p>
+        <form method="post" class="flex space-x-4">
+            {% csrf_token %}
+            <button type="submit" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition duration-200 ease-in-out shadow-md">Delete</button>
+            <a href="{% url 'dashboard:admin:orderitem-list' %}" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out shadow-md">Cancel</a>
+        </form>
+    </div>
+{% endblock %}

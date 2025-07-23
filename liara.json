@@ -1,0 +1,26 @@
+{
+    "platform": "python",
+    "app": "cosystaylondon",
+    "port": 8000,
+    "pythonVersion": "3.9",
+    "django": {
+      "collectStatic": true,
+      "compileMessages": false,
+      "modifySettings": true,
+      "timezone": "Asia/Tehran"
+    },
+    "build": {
+      "location": "iran"
+    },
+    "disks": [
+      {
+        "name": "staticfiles",
+        "mountTo": "/app/staticfiles"
+      },
+      {
+        "name": "media",
+        "mountTo": "/app/media"
+      }
+    ]
+  }
+  

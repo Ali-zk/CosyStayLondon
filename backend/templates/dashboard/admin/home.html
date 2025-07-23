@@ -1,0 +1,138 @@
+{% extends 'dashboard/admin/base_admin.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block page_title %}Overview{% endblock %}
+
+{% block main_content %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-xl p-6 transform hover:scale-105 transition duration-300 ease-in-out">
+            <h3 class="text-lg font-medium text-gray-500 mb-2">Total Orders</h3>
+            <p class="text-4xl font-bold text-gray-900">{{ total_orders }}</p>
+            {% if total_orders_growth_percent != "N/A" %}
+                <span class="text-sm {% if total_orders_growth_status == 'increase' %}text-green-500{% elif total_orders_growth_status == 'decrease' %}text-red-500{% else %}text-gray-500{% endif %}">
+                    {% if total_orders_growth_status == 'increase' %}&#x25B2;{% elif total_orders_growth_status == 'decrease' %}&#x25BC;{% endif %} {{ total_orders_growth_percent }} from last month
+                </span>
+            {% else %}
+                <span class="text-sm text-gray-500">No previous month data</span>
+            {% endif %}
+        </div>
+
+        <div class="bg-white rounded-lg shadow-xl p-6 transform hover:scale-105 transition duration-300 ease-in-out">
+            <h3 class="text-lg font-medium text-gray-500 mb-2">Total Properties</h3>
+            <p class="text-4xl font-bold text-gray-900">{{ total_properties }}</p>
+            <span class="text-sm text-blue-500">{{ new_properties_this_month }} new listings this month</span>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-xl p-6 transform hover:scale-105 transition duration-300 ease-in-out">
+            <h3 class="text-lg font-medium text-gray-500 mb-2">Total Users</h3>
+            <p class="text-4xl font-bold text-gray-900">{{ total_users }}</p>
+            {% if user_growth_percent != "N/A" %}
+                <span class="text-sm {% if user_growth_status == 'increase' %}text-green-500{% else %}text-gray-500{% endif %}">
+                    {% if user_growth_status == 'increase' %}&#x25B2;{% endif %} {{ user_growth_percent }} of total are new this month
+                </span>
+            {% else %}
+                <span class="text-sm text-gray-500">First users onboarded</span>
+            {% endif %}
+        </div>
+
+        <div class="bg-white rounded-lg shadow-xl p-6 transform hover:scale-105 transition duration-300 ease-in-out">
+            <h3 class="text-lg font-medium text-gray-500 mb-2">Total Revenue</h3>
+            <p class="text-4xl font-bold text-gray-900">€{{ total_revenue|floatformat:2 }}</p>
+            {% if revenue_growth_percent != "N/A" %}
+                <span class="text-sm {% if revenue_growth_status == 'increase' %}text-green-500{% elif revenue_growth_status == 'decrease' %}text-red-500{% else %}text-gray-500{% endif %}">
+                    {% if revenue_growth_status == 'increase' %}&#x25B2;{% elif revenue_growth_status == 'decrease' %}&#x25BC;{% endif %} {{ revenue_growth_percent }} from last month
+                </span>
+            {% else %}
+                <span class="text-sm text-gray-500">No previous month revenue</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-lg shadow-xl p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Recent Orders</h3>
+            <ul class="divide-y divide-gray-200">
+                {% for order in recent_orders %}
+                    <li class="py-3 flex justify-between items-center">
+                        <span>Order #{{ order.id }} - {{ order.user.email|default:order.billing_email|default:"Guest" }}</span>
+                        <span class="text-gray-500 text-sm">{{ order.created_at|timesince }} ago</span>
+                    </li>
+                {% empty %}
+                    <li class="py-3 text-center text-gray-500">No recent orders found.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-xl p-10 h-96">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Monthly Revenue</h3>
+            <canvas id="salesChart" class="h-64 my-4 w-full"></canvas>
+        </div>
+    </div>
+
+    {# Moved Chart.js CDN and script to end of main_content block for proper DOM loading #}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Data passed from Django context
+            const salesChartLabels = {{ sales_chart_labels|safe }};
+            const salesChartData = {{ sales_chart_data|safe }};
+
+            const canvas = document.getElementById('salesChart');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    const salesChart = new Chart(ctx, {
+                        type: 'bar', // Can be 'line', 'bar', 'pie', etc.
+                        data: {
+                            labels: salesChartLabels,
+                            datasets: [{
+                                label: 'Revenue (€)',
+                                data: salesChartData,
+                                backgroundColor: 'rgba(59, 130, 246, 0.6)', // Tailwind blue-500
+                                borderColor: 'rgba(59, 130, 246, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false, // Allow div to control size
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: 'Revenue (€)'
+                                    }
+                                },
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Month'
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top',
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.dataset.label + ': €' + context.raw.toLocaleString();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    console.error("Could not get 2D context for canvas with ID 'salesChart'.");
+                }
+            } else {
+                console.error("Canvas element with ID 'salesChart' not found.");
+            }
+        });
+    </script>
+{% endblock %}

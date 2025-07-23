@@ -1,0 +1,82 @@
+{% extends 'dashboard/admin/base_admin.html' %}
+
+{% block title %}Property List{% endblock %}
+
+{% block main_content %}
+<div class="bg-white shadow rounded-lg p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Property List</h1>
+        <a href="{% url 'dashboard:admin:property-create' %}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200">
+            Add New Property
+        </a>
+    </div>
+
+    {% if properties %}
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white rounded-lg overflow-hidden">
+            <thead class="bg-gray-800 text-white">
+                <tr>
+                    <th class="py-3 px-4 text-left">Title</th>
+                    <th class="py-3 px-4 text-left">Owner</th>
+                    <th class="py-3 px-4 text-left">Location</th>
+                    <th class="py-3 px-4 text-left">Price/Night</th>
+                    <th class="py-3 px-4 text-left">Available</th>
+                    <th class="py-3 px-4 text-left">Created At</th>
+                    <th class="py-3 px-4 text-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for property in properties %}
+                <tr class="hover:bg-gray-50 transition duration-150">
+                    <td class="py-4 px-4">{{ property.title }}</td>
+                    <td class="py-4 px-4">{{ property.owner.username }}</td>
+                    <td class="py-4 px-4">{{ property.location }}</td>
+                    <td class="py-4 px-4">${{ property.price_per_night }}</td>
+                    <td class="py-4 px-4">
+                        {% if property.is_available %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Yes</span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">No</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-4 px-4">{{ property.created_at|date:"Y-m-d H:i" }}</td>
+                    <td class="py-4 px-4 space-x-2">
+                        <a href="{% url 'dashboard:admin:property-update' property.pk %}" class="text-blue-600 hover:text-blue-800 hover:underline">Edit</a>
+                        <a href="{% url 'dashboard:admin:property-delete' property.pk %}" class="text-red-600 hover:text-red-800 hover:underline">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-blue-700">
+                    No properties found. <a href="{% url 'dashboard:admin:property-create' %}" class="font-medium text-blue-700 hover:text-blue-600 underline">Add one now!</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if is_paginated %}
+        <div class="mt-4 flex justify-center items-center space-x-2">
+            <span>Pages: </span>
+            {% for page_num in page_obj.paginator.page_range %}
+                {% if page_obj.number == page_num %}
+                    <strong class="px-3 py-1 bg-blue-500 text-white rounded-md">{{ page_num }}</strong>
+                {% else %}
+                    <a href="{{ request.path }}?page={{ page_num }}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">{{ page_num }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

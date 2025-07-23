@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+            <div id="loginForm" class="bg-white rounded-2xl shadow-lg p-6 mb-4">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Sign In</h2>
+                
+                {# پیام‌های جنگو (Django Messages) را در اینجا نمایش می‌دهیم #}
+                {% if messages %}
+                    <div id="messageContainer" class="mb-4">
+                        {% for message in messages %}
+                            <div class="p-3 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% elif message.tags == 'warning' %}bg-yellow-100 text-yellow-700{% endif %} mb-2">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" id="loginEmail" name="email"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                               placeholder="Enter your email">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="loginPassword" name="password"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                               placeholder="Enter your password">
+                    </div>
+                    
+                    <button onclick="submitLoginForm()"
+                            class="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white py-3 rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all duration-200 font-medium">
+                        Sign In
+                    </button>
+                    <p class="text-center text-sm text-gray-600 mt-4">
+                        Don't have an account? <a href="{% url 'accounts:register' %}" class="text-pink-600 hover:underline">Register here</a>
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // تابع برای نمایش پیام‌ها
+        function displayMessage(message, type = 'error') {
+            const messageContainer = document.getElementById('messageContainer') || document.createElement('div');
+            if (!document.getElementById('messageContainer')) {
+                messageContainer.id = 'messageContainer';
+                // قرار دادن کانتینر پیام بالای فرم لاگین
+                document.getElementById('loginForm').prepend(messageContainer);
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `p-3 rounded-lg mb-2 ${type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
+            messageDiv.textContent = message;
+            messageContainer.appendChild(messageDiv);
+
+            // حذف پیام پس از چند ثانیه
+            setTimeout(() => {
+                messageDiv.remove();
+                if (messageContainer.children.length === 0) {
+                    messageContainer.remove();
+                }
+            }, 3000); // پیام 5 ثانیه نمایش داده شود
+        }
+
+
+        async function submitLoginForm() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (!email || !password) {
+                displayMessage('Please enter both email and password.', 'error'); // استفاده از تابع جدید
+                return;
+            }
+
+            try {
+                const response = await fetch('{% url "accounts:login" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (data.message) {
+                         displayMessage(data.message, 'success');
+                    }
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    }
+
+                } else {
+                    displayMessage(data.message || 'Login failed. Please check your credentials.', 'error'); 
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                displayMessage('An error occurred during login. Please try again.', 'error'); 
+            }
+        }
+        
+        // Function to get CSRF token (required for Django POST requests)
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+
+{% endblock %}

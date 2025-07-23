@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+</head>
+
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-8 text-center">Checkout</h1>
+
+        <div class="max-w-4xl mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- Order Summary -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Order Summary</h2>
+                    
+                    <div class="space-y-4">
+                        {% for item in cart_items %}
+                        <div class="border-b border-gray-200 pb-4">
+                            <div class="flex items-start space-x-4">
+                                {% if item.property_item.images.first %}
+                                    <img src="{{ item.property_item.images.first.image.url }}" 
+                                         alt="{{ item.property_item.title }}" 
+                                         class="w-16 h-16 object-cover rounded-lg">
+                                {% endif %}
+                                
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-gray-900">{{ item.property_item.title }}</h3>
+                                    <p class="text-sm text-gray-600">
+                                        <i class="fa-solid fa-location-dot mr-1"></i>
+                                        {{ item.property_item.location }}
+                                    </p>
+                                    <p class="text-sm text-gray-600">
+                                        {{ item.check_in_date }} - {{ item.check_out_date }} 
+                                        ({{ item.num_nights }} nights)
+                                    </p>
+                                    <p class="text-sm text-gray-600">{{ item.number_of_guests }} guests</p>
+                                </div>
+                                
+                                <div class="text-right">
+                                    <p class="font-semibold">€{{ item.total_price }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mt-6 pt-4 border-t border-gray-200">
+                        <div class="flex justify-between items-center text-xl font-bold">
+                            <span>Total:</span>
+                            <span>€{{ cart.total_price }}</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">VAT will be calculated based on your billing country</p>
+                    </div>
+                </div>
+
+                <!-- Billing Information -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Billing Information</h2>
+                    
+                    <form method="post" class="space-y-6">
+                        {% csrf_token %}
+                        
+                        <div>
+                            <label for="full_name" class="block text-sm font-medium text-gray-700 mb-2">
+                                Full Name *
+                            </label>
+                            <input type="text" 
+                                   id="full_name" 
+                                   name="full_name" 
+                                   value="{{ billing_full_name }}"
+                                   required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
+                        </div>
+
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                                Email Address *
+                            </label>
+                            <input type="email" 
+                                   id="email" 
+                                   name="email" 
+                                   value="{{ billing_email }}"
+                                   required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
+                        </div>
+
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
+                                Phone Number *
+                            </label>
+                            <input type="tel" 
+                                   id="phone" 
+                                   name="phone" 
+                                   value="{{ billing_phone }}"
+                                   required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
+                        </div>
+
+                        <div>
+                            <label for="country" class="block text-sm font-medium text-gray-700 mb-2">
+                                Billing Country *
+                            </label>
+                            <select id="country" 
+                                    name="country" 
+                                    required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
+                                {% for code, name in countries %}
+                                    <option value="{{ code }}" {% if code == 'DE' %}selected{% endif %}>
+                                        {{ name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">VAT will be calculated based on your country</p>
+                        </div>
+
+                        <!-- Payment Methods Info -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h3 class="font-semibold text-blue-900 mb-2">
+                                <i class="fa-solid fa-credit-card mr-2"></i>
+                                Available Payment Methods
+                            </h3>
+                            <div class="text-sm text-blue-800 space-y-1">
+                                <p>• Credit/Debit Cards (Visa, Mastercard, American Express)</p>
+                                <p>• SEPA Direct Debit (for EU customers)</p>
+                                <p>• Klarna (Pay Later)</p>
+                                <p>• iDEAL (Netherlands)</p>
+                                <p>• Bancontact (Belgium)</p>
+                            </div>
+                        </div>
+
+                        <!-- Terms and Privacy -->
+                        <div class="flex items-start space-x-3">
+                            <input type="checkbox" 
+                                   id="terms" 
+                                   required
+                                   class="mt-1 h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded">
+                            <label for="terms" class="text-sm text-gray-700">
+                                I agree to the <a href="#" class="text-pink-600 hover:text-pink-700">Terms of Service</a> 
+                                and <a href="#" class="text-pink-600 hover:text-pink-700">Privacy Policy</a> *
+                            </label>
+                        </div>
+
+                        <button type="submit" 
+                                class="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-4 px-6 rounded-lg text-lg font-semibold hover:from-pink-600 hover:to-purple-700 transition-all duration-300 shadow-lg">
+                            <i class="fa-solid fa-lock mr-2"></i>
+                            Proceed to Payment
+                        </button>
+                    </form>
+
+                    <!-- Security Notice -->
+                    <div class="mt-6 text-center">
+                        <div class="inline-flex items-center text-sm text-gray-600">
+                            <i class="fa-solid fa-shield-halved text-green-600 mr-2"></i>
+                            Your payment is secured with 256-bit SSL encryption
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

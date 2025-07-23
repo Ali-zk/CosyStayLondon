@@ -1,0 +1,117 @@
+{% extends 'dashboard/admin/base_admin.html' %}
+
+{% block title %}Delete Order - Admin Panel{% endblock %}
+
+{% block page_title %}Delete Order{% endblock %}
+
+{% block main_content %}
+<div class="bg-white rounded-lg shadow p-6">
+    <div class="mb-6">
+        <div class="flex items-center mb-4">
+            <svg class="w-12 h-12 text-red-500 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+            <div>
+                <h2 class="text-xl font-semibold text-gray-800">Confirm Order Deletion</h2>
+                <p class="text-gray-600">This action cannot be undone.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+        <div class="flex">
+            <svg class="h-5 w-5 text-red-400 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">Warning</h3>
+                <div class="mt-2 text-sm text-red-700">
+                    <p>Are you sure you want to delete this order? This will permanently remove:</p>
+                    <ul class="list-disc list-inside mt-2">
+                        <li>Order information and history</li>
+                        <li>All related order items</li>
+                        <li>Payment and transaction records</li>
+                        <li>Any associated data</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-3">Order Details</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <span class="text-sm font-medium text-gray-500">Order ID:</span>
+                <span class="text-sm text-gray-900 ml-2">#{{ object.id }}</span>
+            </div>
+            {% if object.user %}
+            <div>
+                <span class="text-sm font-medium text-gray-500">Customer:</span>
+                <span class="text-sm text-gray-900 ml-2">{{ object.user.get_full_name|default:object.user.email }}</span>
+            </div>
+            {% endif %}
+            {% if object.status %}
+            <div>
+                <span class="text-sm font-medium text-gray-500">Status:</span>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ml-2
+                {% if object.status == 'completed' %}bg-green-100 text-green-800
+                {% elif object.status == 'pending' %}bg-yellow-100 text-yellow-800
+                {% elif object.status == 'cancelled' %}bg-red-100 text-red-800
+                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {{ object.get_status_display|default:object.status }}
+                </span>
+            </div>
+            {% endif %}
+            {% if object.total_amount %}
+            <div>
+                <span class="text-sm font-medium text-gray-500">Total Amount:</span>
+                <span class="text-sm text-gray-900 ml-2">${{ object.total_amount }}</span>
+            </div>
+            {% endif %}
+            {% if object.created_at %}
+            <div>
+                <span class="text-sm font-medium text-gray-500">Created Date:</span>
+                <span class="text-sm text-gray-900 ml-2">{{ object.created_at|date:"M d, Y H:i" }}</span>
+            </div>
+            {% endif %}
+            {% if object.updated_at %}
+            <div>
+                <span class="text-sm font-medium text-gray-500">Last Updated:</span>
+                <span class="text-sm text-gray-900 ml-2">{{ object.updated_at|date:"M d, Y H:i" }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+            <a href="{% url 'dashboard:admin:order-list' %}" 
+               class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded transition duration-200">
+                <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                Cancel
+            </a>
+            <button type="submit" 
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded transition duration-200">
+                <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Yes, Delete Order
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Add confirmation dialog
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (!confirm('Are you absolutely sure you want to delete this order? This action cannot be undone.')) {
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

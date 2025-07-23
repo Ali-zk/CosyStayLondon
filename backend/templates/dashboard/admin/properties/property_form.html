@@ -1,0 +1,198 @@
+{% extends 'dashboard/admin/base_admin.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block main_content %}
+<div class="w-full">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ page_title }}</h1>
+    
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Property Details Card -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="bg-gray-800 text-white px-6 py-4">
+                <h5 class="text-lg font-semibold">Property Details</h5>
+            </div>
+            <div class="p-6">
+                {% for field in form %}
+                    <div class="mb-4">
+                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ field.label }}:
+                        </label>
+                        
+                        {% if field.field.widget.input_type == 'checkbox' %}
+                            <div class="flex items-center">
+                                {{ field|add_class:"mr-2" }}
+                                <label class="text-sm text-gray-700" for="{{ field.id_for_label }}">
+                                    {{ field.label }}
+                                </label>
+                            </div>
+                        {% elif field.field.widget.input_type == 'date' %}
+                            {{ field|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" }}
+                        {% else %}
+                            {{ field|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" }}
+                        {% endif %}
+
+                        {% if field.help_text %}
+                            <p class="text-xs text-gray-500 mt-1">{{ field.help_text }}</p>
+                        {% endif %}
+                        
+                        {% for error in field.errors %}
+                            <div class="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded mt-1 text-sm">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Property Images Card -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="bg-gray-800 text-white px-6 py-4">
+                <h5 class="text-lg font-semibold">Property Images</h5>
+            </div>
+            <div class="p-6">
+                {{ formset.management_form }}
+                <div id="image-formset-container" class="space-y-4">
+                    {% for form in formset %}
+                        <div class="flex flex-wrap gap-4 p-4 border border-gray-200 rounded-lg shadow-sm image-formset-row {% if form.instance.pk %}existing-image{% else %}new-image{% endif %}">
+                            <div class="flex-1 min-w-0">
+                                <label for="{{ form.image.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.image.label }}:
+                                </label>
+                                {{ form.image|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" }}
+                                {% for error in form.image.errors %}
+                                    <div class="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded mt-1 text-sm">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="flex-1 min-w-0">
+                                <label for="{{ form.caption.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.caption.label }}:
+                                </label>
+                                {{ form.caption|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" }}
+                                {% for error in form.caption.errors %}
+                                    <div class="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded mt-1 text-sm">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="flex items-end justify-center min-w-max">
+                                {% if form.instance.pk %}
+                                    <div class="flex items-center">
+                                        {{ form.DELETE }}
+                                        <label class="ml-2 text-sm text-gray-700" for="{{ form.DELETE.id_for_label }}">
+                                            Delete
+                                        </label>
+                                    </div>
+                                {% else %}
+                                    <button type="button" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium remove-form-row">
+                                        Remove
+                                    </button>
+                                {% endif %}
+                            </div>
+                            
+                            {% if form.instance.pk %}
+                                {{ form.id }}
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium mt-4" id="add-more-images">
+                    Add More Images
+                </button>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex space-x-4">
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md text-lg font-medium">
+                Save Property
+            </button>
+            <a href="{% url 'dashboard:admin:property-list' %}" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-md text-lg font-medium no-underline">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const addMoreButton = document.getElementById('add-more-images');
+        const formsetContainer = document.getElementById('image-formset-container');
+        const totalForms = document.querySelector('[name$="TOTAL_FORMS"]');
+
+        addMoreButton.addEventListener('click', function() {
+            let currentTotalForms = parseInt(totalForms.value);
+            const emptyForm = formsetContainer.querySelector('.image-formset-row.new-image:last-child');
+            let newForm;
+
+            if (emptyForm) {
+                newForm = emptyForm.cloneNode(true);
+            } else {
+                const firstForm = formsetContainer.querySelector('.image-formset-row');
+                newForm = firstForm.cloneNode(true);
+                newForm.querySelectorAll('input').forEach(input => {
+                    input.value = '';
+                    input.checked = false;
+                });
+                newForm.classList.add('new-image');
+                newForm.classList.remove('existing-image');
+                const idField = newForm.querySelector('input[name$="-id"]');
+                if (idField) idField.remove();
+            }
+
+            newForm.innerHTML = newForm.innerHTML.replace(/__prefix__/g, currentTotalForms);
+            
+            const removeButton = newForm.querySelector('.remove-form-row');
+            if (removeButton) {
+                removeButton.addEventListener('click', function() {
+                    newForm.remove();
+                    totalForms.value = parseInt(totalForms.value) - 1;
+                    updateFormIndices();
+                });
+            }
+
+            formsetContainer.appendChild(newForm);
+            totalForms.value = currentTotalForms + 1;
+        });
+
+        document.querySelectorAll('.remove-form-row').forEach(button => {
+            button.addEventListener('click', function() {
+                const row = button.closest('.image-formset-row');
+                if (row) {
+                    row.remove();
+                    totalForms.value = parseInt(totalForms.value) - 1;
+                    updateFormIndices();
+                }
+            });
+        });
+
+        function updateFormIndices() {
+            let index = 0;
+            formsetContainer.querySelectorAll('.image-formset-row').forEach(row => {
+                row.querySelectorAll('[name]').forEach(input => {
+                    const name = input.getAttribute('name');
+                    if (name) {
+                        input.setAttribute('name', name.replace(/-\d+-/, `-${index}-`));
+                    }
+                });
+                row.querySelectorAll('[id]').forEach(input => {
+                    const id = input.getAttribute('id');
+                    if (id) {
+                        input.setAttribute('id', id.replace(/-\d+-/, `-${index}-`));
+                    }
+                });
+                index++;
+            });
+        }
+    });
+</script>
+{% endblock %}

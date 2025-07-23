@@ -1,0 +1,17 @@
+{% extends 'dashboard/admin/base_admin.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <h1 class="mb-4">Confirm Deletion</h1>
+    <div class="alert alert-warning" role="alert">
+        Are you sure you want to delete the property "{{ property.title }}"? This action cannot be undone.
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+        <a href="{% url 'dashboard:admin:property-list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

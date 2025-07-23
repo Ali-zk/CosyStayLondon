@@ -1,0 +1,274 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-8 text-center">Secure Payment</h1>
+
+        <div class="max-w-2xl mx-auto">
+            <!-- Order Summary -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Order #{{ order.id }}</h2>
+                
+                <div class="space-y-3">
+                    {% for item in order.order_items.all %}
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+                        <div>
+                            <h3 class="font-medium text-gray-900">{{ item.property_item.title }}</h3>
+                            <p class="text-sm text-gray-600">
+                                {{ item.check_in_date }} - {{ item.check_out_date }} 
+                                ({{ item.num_nights }} nights)
+                            </p>
+                        </div>
+                        <span class="font-semibold">€{{ item.item_total_price }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Subtotal:</span>
+                        <span>€{{ payment.net_amount|default:order.total_amount }}</span>
+                    </div>
+                    {% if payment.vat_amount > 0 %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">VAT ({{ payment.vat_rate|floatformat:1 }}%):</span>
+                        <span>€{{ payment.vat_amount }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="flex justify-between items-center text-xl font-bold mt-2">
+                        <span>Total:</span>
+                        <span>€{{ order.total_amount }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Form -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Payment Details</h2>
+
+                <!-- Payment Status Messages -->
+                <div id="payment-messages" class="mb-6 hidden">
+                    <div id="payment-error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg hidden">
+                        <i class="fa-solid fa-exclamation-triangle mr-2"></i>
+                        <span id="error-message"></span>
+                    </div>
+                    <div id="payment-processing" class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg hidden">
+                        <i class="fa-solid fa-spinner fa-spin mr-2"></i>
+                        Processing your payment...
+                    </div>
+                </div>
+
+                <form id="payment-form" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Stripe Payment Element -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">
+                            Payment Method
+                        </label>
+                        <div id="payment-element" class="p-4 border border-gray-300 rounded-lg">
+                            <!-- Stripe Elements will create form elements here -->
+                        </div>
+                    </div>
+
+                    <!-- Billing Details (read-only) -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h3 class="font-semibold text-gray-900 mb-3">Billing Information</h3>
+                        <div class="text-sm text-gray-700 space-y-1">
+                            <p><strong>Name:</strong> {{ order.billing_full_name }}</p>
+                            <p><strong>Email:</strong> {{ order.billing_email }}</p>
+                            <p><strong>Phone:</strong> {{ order.billing_phone }}</p>
+                            {% if payment.billing_country %}
+                            <p><strong>Country:</strong> {{ payment.get_billing_country_display|default:payment.billing_country }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <button id="submit-payment" 
+                            type="submit"
+                            class="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white py-4 px-6 rounded-lg text-lg font-semibold hover:from-green-600 hover:to-blue-700 transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled>
+                        <i class="fa-solid fa-lock mr-2"></i>
+                        <span id="button-text">Complete Payment</span>
+                    </button>
+                </form>
+
+                <!-- Security Features -->
+                <div class="mt-6 space-y-3">
+                    <div class="flex items-center justify-center space-x-6 text-sm text-gray-600">
+                        <div class="flex items-center">
+                            <i class="fa-solid fa-shield-halved text-green-600 mr-2"></i>
+                            256-bit SSL
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fa-solid fa-lock text-green-600 mr-2"></i>
+                            PCI Compliant
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fa-solid fa-check-circle text-green-600 mr-2"></i>
+                            SCA Compliant
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <p class="text-xs text-gray-500">
+                            Powered by Stripe • Your payment information is encrypted and secure
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Stripe
+    const stripe = Stripe('{{ stripe_publishable_key }}');
+    const elements = stripe.elements({
+        appearance: {
+            theme: 'stripe',
+            variables: {
+                colorPrimary: '#ec4899',
+                colorBackground: '#ffffff',
+                colorText: '#374151',
+                colorDanger: '#ef4444',
+                fontFamily: 'system-ui, sans-serif',
+                spacingUnit: '4px',
+                borderRadius: '8px'
+            }
+        }
+    });
+
+    // Create payment element
+    const paymentElement = elements.create('payment', {
+        layout: 'tabs'
+    });
+    paymentElement.mount('#payment-element');
+
+    // Enable submit button when element is ready
+    paymentElement.on('ready', function() {
+        document.getElementById('submit-payment').disabled = false;
+    });
+
+    // Handle form submission
+    const form = document.getElementById('payment-form');
+    const submitButton = document.getElementById('submit-payment');
+    
+    form.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        // Disable submit button
+        submitButton.disabled = true;
+        document.getElementById('button-text').textContent = 'Processing...';
+        showProcessingMessage();
+
+        // Confirm payment with Stripe
+        const {error, paymentIntent} = await stripe.confirmPayment({
+            elements,
+            confirmParams: {
+                return_url: window.location.origin + '/cart/payment-success/',
+            },
+            redirect: 'if_required'
+        });
+
+        if (error) {
+            // Payment failed
+            console.error('Payment failed:', error);
+            showErrorMessage(error.message);
+            resetSubmitButton();
+        } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+            // Payment succeeded
+            console.log('Payment succeeded:', paymentIntent);
+            
+            // Confirm with backend
+            try {
+                const response = await fetch('/cart/payment/confirm/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        payment_intent_id: paymentIntent.id
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (result.requires_action) {
+                        // Additional authentication required
+                        const {error} = await stripe.confirmPayment({
+                            clientSecret: result.client_secret
+                        });
+                        
+                        if (error) {
+                            showErrorMessage(error.message);
+                            resetSubmitButton();
+                        }
+                    } else {
+                        // Payment completed successfully
+                        window.location.href = result.redirect_url || '/cart/payment-success/';
+                    }
+                } else {
+                    showErrorMessage(result.error || 'Payment confirmation failed');
+                    resetSubmitButton();
+                }
+            } catch (err) {
+                console.error('Backend confirmation error:', err);
+                showErrorMessage('Payment confirmation failed. Please contact support.');
+                resetSubmitButton();
+            }
+        }
+    });
+
+    function showErrorMessage(message) {
+        const messagesDiv = document.getElementById('payment-messages');
+        const errorDiv = document.getElementById('payment-error');
+        const errorMessage = document.getElementById('error-message');
+        
+        hideProcessingMessage();
+        messagesDiv.classList.remove('hidden');
+        errorDiv.classList.remove('hidden');
+        errorMessage.textContent = message;
+    }
+
+    function showProcessingMessage() {
+        const messagesDiv = document.getElementById('payment-messages');
+        const processingDiv = document.getElementById('payment-processing');
+        
+        messagesDiv.classList.remove('hidden');
+        processingDiv.classList.remove('hidden');
+        hideErrorMessage();
+    }
+
+    function hideProcessingMessage() {
+        const processingDiv = document.getElementById('payment-processing');
+        processingDiv.classList.add('hidden');
+    }
+
+    function hideErrorMessage() {
+        const errorDiv = document.getElementById('payment-error');
+        errorDiv.classList.add('hidden');
+    }
+
+    function resetSubmitButton() {
+        submitButton.disabled = false;
+        document.getElementById('button-text').textContent = 'Complete Payment';
+        hideProcessingMessage();
+    }
+});
+</script>
+
+{% endblock %}

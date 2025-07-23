@@ -1,0 +1,248 @@
+{% load static %}
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+        integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style type="text/tailwindcss">
+        @theme {
+        --color-clifford: #da373d;
+      }
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+    </style>
+</head>
+
+<body class="">
+    <div class="flex justify-center">
+        <nav
+            class="fixed bottom-4 bg-gray-50/50 backdrop-blur-md shadow-gray-800/40 shadow-lg border-t border-t-pink-950/50 h-14  z-40 rounded-full px-4 flex flex-row gap-8 justify-center items-center">
+            <a href="{% url 'shop:product_list' %}">
+                <i class="fa-solid fa-list-ul text-slate-400 text-2xl"></i>
+            </a>
+            <a href="{% url 'cart:view_cart' %}">
+                <i class="fa-solid fa-bag-shopping text-slate-400 text-2xl"></i>
+            </a>
+            <a href="{% url 'home:index' %}">
+                <i class="fa-solid fa-house text-pink-700 text-3xl"></i>
+            </a>
+            <a href="#about">
+                <i class="fa-regular fa-address-card text-slate-400 text-2xl"></i>
+            </a>
+            <a href="{% url 'dashboard:home' %}">
+                <i class="fa-solid fa-circle-user text-slate-400 text-2xl"></i>
+            </a>
+        </nav>
+    </div>
+<div>
+    <div class="px-4 pb-20">
+<div class="flex justify-between items-center">
+    <a href="./index.html"><i class="fa-brands fa-drupal text-2xl lg:text-4xl mt-2 text-pink-700">logo</i></a>
+    <section class="mt-2 flex items-center"> {# اضافه کردن flex items-center برای چینش عمودی #}
+        <div x-data="{ isBlurred: false }" class="relative flex items-center"> {# اضافه کردن flex items-center #}
+            <div x-show="isBlurred" x-transition class="fixed inset-0 backdrop-blur-sm bg-black/20 z-50"
+                @click="isBlurred=false"></div>
+
+            <form @submit.prevent="isBlurred = true" class="flex z-60 items-center relative -ml-2 md:-ml-1 lg:-ml-24">
+                <label for="simple-search" class="sr-only">Search</label>
+                <div class="relative w-full">
+                    <input type="text" id="simple-search" x-on:focus="isBlurred=true"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-2xl focus:ring-blue-500 focus:border-blue-500 focus:scale-110 focus:shadow-md block w-full ps-4 p-2.5 duration-200"
+                        placeholder="Search..." required />
+                </div>
+                <button type="submit" :class="{ 'scale-110 translate-x-4': isBlurred }"
+                    class="p-2.5 ms-2 text-sm font-medium text-white bg-pink-700 rounded-2xl border border-pink-700 hover:bg-pink-800 focus:ring-4 focus:outline-none focus:ring-pink-300 duration-200 transform">
+                    <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 20 20">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                    </svg>
+                    <span class="sr-only">Search</span>
+                </button>
+            </form>
+            
+            {# بخش لاگین/لاگ اوت باید اینجا باشد، خارج از فرم جستجو اما داخل div x-data #}
+            {% if request.user.is_authenticated %}
+            <form action="{% url 'accounts:logout' %}" method="post" class="ml-4"> {# اضافه کردن ml-4 برای فاصله #}
+                {% csrf_token %}
+                <button type="submit">
+                    <i class="fa-solid fa-sign-out text-2xl text-gray-700 hover:text-pink-700 duration-200 mx-2"></i>
+                </button>
+            </form>
+            {% else %}
+            <a href="{% url 'accounts:login' %}" class="ml-4"> {# اضافه کردن ml-4 برای فاصله #}
+                <i class="fa-solid fa-sign-in text-2xl text-gray-700 hover:text-pink-700 duration-200 mx-2"></i>
+            </a>
+            {% endif %}
+
+        </div>
+    </section>
+</div>
+
+
+        {% block content %}{% endblock content %}
+
+
+    </div>
+    <footer class="bg-gray-900 text-white py-8 pb-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h3 class="text-2xl font-bold mb-4">London<span class="text-pink-400">Homes</span></h3>
+                <p class="text-gray-400 mb-4">Your trusted partner for quality rental properties in London</p>
+                <div class="flex justify-center space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-white transition">
+                        <i class="fab fa-facebook-f text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition">
+                        <i class="fab fa-instagram text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition">
+                        <i class="fab fa-twitter text-xl"></i>
+                    </a>
+                </div>
+                <div class="mt-6 pt-6 border-t border-gray-800">
+                    <p class="text-gray-400 text-sm">© 2025 LondonHomes. All rights reserved.</p>
+                </div>
+                <div class="pt-1 flex flex-row justify-center gap-1">
+                    <p>Powered by </p>
+                    <a href="https://Twindesign.ir" class=" text-pink-600">Twin Design</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+
+    <script>
+        function sliderComponent() {
+            return {
+                isDragging: false,
+                startX: 0,
+                scrollLeftStart: 0,
+                sliderViewportEl: null,
+                sliderTrackEl: null,
+                rafId: null, // For requestAnimationFrame
+                velocity: 0,
+                lastX: 0,
+                frameTime: 0,
+                inertiaTimeout: null,
+
+                init() {
+                    this.sliderViewportEl = this.$refs.sliderViewport;
+                    this.sliderTrackEl = this.$refs.sliderTrack;
+
+                    // Prevent image dragging which can interfere
+                    this.sliderTrackEl.querySelectorAll('img').forEach(img => {
+                        img.setAttribute('draggable', 'false');
+                        img.addEventListener('dragstart', (e) => e.preventDefault());
+                    });
+                },
+
+                startDragging(e, isTouchEvent = false) {
+                    if (this.inertiaTimeout) clearTimeout(this.inertiaTimeout);
+                    if (this.rafId) cancelAnimationFrame(this.rafId);
+
+                    this.isDragging = true;
+                    const pageX = isTouchEvent ? e.touches[0].pageX : e.pageX;
+                    this.startX = pageX;
+                    this.lastX = pageX; // For velocity calculation
+                    this.scrollLeftStart = this.sliderViewportEl.scrollLeft;
+                    this.velocity = 0;
+                    this.frameTime = Date.now();
+
+                    // Change cursor and prevent text selection
+                    this.sliderViewportEl.classList.add('cursor-grabbing');
+                    this.sliderViewportEl.classList.remove('cursor-grab');
+                    if (!isTouchEvent) {
+                        document.body.style.userSelect = 'none';
+                    }
+                },
+
+                drag(e, isTouchEvent = false) {
+                    if (!this.isDragging) return;
+                    // e.preventDefault(); // Be careful with this on touchmove, might prevent vertical scroll on page. .passive on touchstart helps.
+
+                    const pageX = isTouchEvent ? e.touches[0].pageX : e.pageX;
+                    const currentTime = Date.now();
+                    const deltaTime = currentTime - this.frameTime;
+
+                    const walk = (pageX - this.startX);
+                    this.sliderViewportEl.scrollLeft = this.scrollLeftStart - walk;
+
+                    // Velocity calculation
+                    if (deltaTime > 0) { // Avoid division by zero
+                        this.velocity = (pageX - this.lastX) / deltaTime;
+                    }
+                    this.lastX = pageX;
+                    this.frameTime = currentTime;
+                },
+
+                stopDragging(isTouchEvent = false) {
+                    if (!this.isDragging) return;
+                    this.isDragging = false;
+
+                    this.sliderViewportEl.classList.remove('cursor-grabbing');
+                    this.sliderViewportEl.classList.add('cursor-grab');
+                    if (!isTouchEvent) {
+                        document.body.style.userSelect = 'auto';
+                    }
+
+                    // Inertia/momentum scroll
+                    if (Math.abs(this.velocity) > 0.1) { // Only apply inertia if there's some velocity
+                        this.applyInertia();
+                    }
+                },
+
+                applyInertia() {
+                    if (this.rafId) cancelAnimationFrame(this.rafId);
+
+                    const decceleration = 0.95; // How quickly the scroll slows down
+                    const stopThreshold = 0.1; // Minimum speed to stop animation
+
+                    const animate = () => {
+                        if (Math.abs(this.velocity) < stopThreshold) {
+                            this.velocity = 0; // Stop completely
+                            cancelAnimationFrame(this.rafId);
+                            return;
+                        }
+
+                        this.sliderViewportEl.scrollLeft -= this.velocity * 16; // Multiply by ~ms per frame
+                        this.velocity *= decceleration;
+
+                        this.rafId = requestAnimationFrame(animate);
+                    };
+                    this.rafId = requestAnimationFrame(animate);
+                }
+            };
+        }
+                // Smooth scrolling for navigation links
+                document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+    {% include 'messages.html' %}
+</body>
+
+</html>

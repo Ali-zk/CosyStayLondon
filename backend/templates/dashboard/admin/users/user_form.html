@@ -1,0 +1,62 @@
+{% extends 'dashboard/admin/base_admin.html' %}
+{% load widget_tweaks %}
+{% block title %}User Form{% endblock %}
+
+{% block page_title %}User Form{% endblock %}
+
+{% block main_content %}
+    <h2 class="text-3xl font-extrabold mb-8 text-gray-900">{{ request.resolver_match.url_name|slice:"user-"|capfirst }} User Details</h2>
+    <form method="post" class="bg-white p-10 rounded-xl shadow-2xl space-y-6">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {% for field in form %}
+                {% if field.name == 'password' or field.name == 'password2' %}
+                    {# Only show password fields for creation (user-create URL) #}
+                    {% if request.resolver_match.url_name == 'user-create' %}
+                        <div class="relative z-0 w-full mb-6 group">
+                            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">{{ field.label }}</label>
+                            {{ field|add_class:"block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" }}
+                            {% if field.help_text %}
+                                <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+                            {% endif %}
+                            {% if field.errors %}
+                                <div class="text-red-500 text-xs italic mt-1 space-y-1">
+                                    {% for error in field.errors %}<p>{{ error }}</p>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="relative z-0 w-full mb-6 group">
+                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">{{ field.label }}</label>
+                        {% if field.field.widget.input_type == 'checkbox' %}
+                            <div class="flex items-center mt-2">
+                                {{ field|add_class:"h-5 w-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300" }}
+                                <span class="ml-2 text-gray-900 text-sm">{{ field.label }}</span>
+                            </div>
+                        {% else %}
+                            {{ field|add_class:"block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" }}
+                        {% endif %}
+                        {% if field.help_text %}
+                            <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+                        {% endif %}
+                        {% if field.errors %}
+                            <div class="text-red-500 text-xs italic mt-1 space-y-1">
+                                {% for error in field.errors %}<p>{{ error }}</p>{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <div class="mt-10 flex space-x-4 justify-start">
+            <button type="submit" class="bg-green-600 text-white px-8 py-3 rounded-lg shadow-lg hover:bg-green-700 transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
+                Save
+            </button>
+            <a href="{% url 'dashboard:admin:user-list' %}" class="bg-gray-600 text-white px-8 py-3 rounded-lg shadow-lg hover:bg-gray-700 transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">
+                Back to List
+            </a>
+        </div>
+    </form>
+{% endblock %}

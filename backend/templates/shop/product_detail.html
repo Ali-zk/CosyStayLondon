@@ -1,0 +1,317 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+        integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style type="text/tailwindcss">
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .aspect-16-10 {
+            aspect-ratio: 16 / 10;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50" x-data="propertyDetail()">
+    <div class="pb-20">
+        <div class="bg-white shadow-sm">
+            <div class="px-4 py-6">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ house.title }}</h1>
+                <div class="flex items-center text-gray-600">
+                    <i class="fa-solid fa-location-dot text-pink-500 mr-2"></i>
+                    <span>{{ house.location }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-4 py-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <div class="lg:col-span-2">
+                    <div class="relative bg-white rounded-2xl overflow-hidden shadow-lg">
+                        <div class="aspect-16-10 relative overflow-hidden">
+                            {% for image in house.images.all %}
+                            <img :src="images[currentImage]" 
+                                 :alt="'Property image ' + (currentImage + 1)"
+                                 class="w-full h-full object-cover transition-opacity duration-300">
+                            {% endfor %}
+                            <button @click="prevImage()" 
+                                    class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-lg transition-all duration-200">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button @click="nextImage()" 
+                                    class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-lg transition-all duration-200">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                            
+                            <div class="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                <span x-text="currentImage + 1"></span> / <span x-text="images.length"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4">
+                            <div class="flex gap-2 overflow-x-auto no-scrollbar">
+                                <template x-for="(image, index) in images" :key="index">
+                                    <button @click="currentImage = index" 
+                                            class="flex-shrink-0 w-20 h-12 rounded-lg overflow-hidden border-2 transition-all duration-200"
+                                            :class="currentImage === index ? 'border-pink-500' : 'border-gray-200 hover:border-gray-300'">
+                                        <img :src="image" :alt="'Thumbnail ' + (index + 1)" class="w-full h-full object-cover">
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-2xl shadow-lg p-6 sticky top-4">
+                        <div class="mb-6">
+                            <div class="flex items-baseline gap-2 mb-4">
+                                <span class="text-3xl font-bold text-pink-700">£{{ house.price_per_night|floatformat:0 }}</span>
+                                <span class="text-gray-500">/night</span>
+                            </div>
+                        </div>
+
+                        {# Form for submitting booking details to the Django view #}
+                        <form method="POST" class="space-y-4"> 
+                            {% csrf_token %}
+                            {# Hidden input for property ID #}
+                            <input type="hidden" name="property" value="{{ house.pk }}">
+
+                            <div>
+                                <label for="check_in_date" class="block text-sm font-medium text-gray-700 mb-2">Check-in</label>
+                                <input type="date" id="check_in_date" name="check_in_date" x-model="bookingForm.checkin" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                                {# Display form errors for check_in_date #}
+                                {% if booking_form.check_in_date.errors %}
+                                    <p class="text-red-500 text-xs italic">{{ booking_form.check_in_date.errors.as_text }}</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label for="check_out_date" class="block text-sm font-medium text-gray-700 mb-2">Check-out</label>
+                                <input type="date" id="check_out_date" name="check_out_date" x-model="bookingForm.checkout" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                                {# Display form errors for check_out_date #}
+                                {% if booking_form.check_out_date.errors %}
+                                    <p class="text-red-500 text-xs italic">{{ booking_form.check_out_date.errors.as_text }}</p>
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <label for="number_of_guests" class="block text-sm font-medium text-gray-700 mb-2">Guests</label>
+                                <input type="number" id="number_of_guests" name="number_of_guests" x-model="bookingForm.guests" 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                                {# Display form errors for number_of_guests #}
+                                {% if booking_form.number_of_guests.errors %}
+                                    <p class="text-red-500 text-xs italic">{{ booking_form.number_of_guests.errors.as_text }}</p>
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <label for="full_name" class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                                <input type="text" id="full_name" name="full_name" x-model="bookingForm.name" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                       placeholder="Enter your full name">
+                                {# Display form errors for full_name #}
+                                {% if booking_form.full_name.errors %}
+                                    <p class="text-red-500 text-xs italic">{{ booking_form.full_name.errors.as_text }}</p>
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                <input type="email" id="email" name="email" x-model="bookingForm.email" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                       placeholder="Enter your email">
+                                {# Display form errors for email #}
+                                {% if booking_form.email.errors %}
+                                    <p class="text-red-500 text-xs italic">{{ booking_form.email.errors.as_text }}</p>
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <label for="phone_number" class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                                <input type="tel" id="phone_number" name="phone_number" x-model="bookingForm.phone" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                       placeholder="Enter your phone number">
+                                {# Display form errors for phone_number #}
+                                {% if booking_form.phone_number.errors %}
+                                    <p class="text-red-500 text-xs italic">{{ booking_form.phone_number.errors.as_text }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            {# Display non-field errors (e.g., from clean method) #}
+                            {% if booking_form.non_field_errors %}
+                                <div class="text-red-500 text-xs italic">
+                                    {{ booking_form.non_field_errors.as_text }}
+                                </div>
+                            {% endif %}
+
+                            <div class="border-t pt-4 mt-6" x-show="totalNights > 0">
+                                <div class="flex justify-between text-sm text-gray-600 mb-2">
+                                    <span>£{{ house.price_per_night|floatformat:0 }}× <span x-text="totalNights"></span> nights</span>
+                                    <span>£<span x-text="totalPrice"></span></span>
+                                </div>
+                                <div class="flex justify-between font-bold text-lg">
+                                    <span>Total</span>
+                                    <span class="text-pink-700">£<span x-text="totalPrice"></span></span>
+                                </div>
+                            </div>
+
+                            <button type="submit" 
+                                    class="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white py-3 rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl">
+                                Reserve Now
+                            </button>
+                        </form>
+
+                        <p class="text-xs text-gray-500 text-center mt-4">
+                            You won't be charged yet
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 space-y-8">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">About This Place</h2>
+                    <p class="text-gray-600 leading-relaxed">
+                        {{ house.description|truncatechars:150 }}
+                    </p>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Amenities</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-wifi text-pink-500 text-xl"></i>
+                            <span class="text-gray-700">Free WiFi</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-tv text-pink-500 text-xl"></i>
+                            <span class="text-gray-700">Smart TV</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-kitchen-set text-pink-500 text-xl"></i>
+                            <span class="text-gray-700">Full Kitchen</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-car text-pink-500 text-xl"></i>
+                            <span class="text-gray-700">Parking</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-snowflake text-pink-500 text-xl"></i>
+                            <span class="text-gray-700">Air Conditioning</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-dumbbell text-pink-500 text-xl"></i>
+                            <span class="text-gray-700">Gym Access</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Location</h2>
+                    <div class="mb-4">
+                        <div class="flex items-start gap-3">
+                            <i class="fa-solid fa-location-dot text-pink-500 text-xl mt-1"></i>
+                            <div>
+                                <p class="font-medium text-gray-800">123 Exhibition Road</p>
+                                <p class="text-gray-600">{{ house.location }}</p>
+                                <p class="text-gray-600 mt-2">{{ house.address }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <h3 class="font-semibold text-gray-800 mb-3">Nearby Attractions</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Natural History Museum</span>
+                                <span class="text-gray-500">3 min walk</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Victoria & Albert Museum</span>
+                                <span class="text-gray-500">5 min walk</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Hyde Park</span>
+                                <span class="text-gray-500">8 min walk</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">South Kensington Station</span>
+                                <span class="text-gray-500">2 min walk</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function propertyDetail() {
+        return {
+            currentImage: 0,
+            images: [
+                {% for image in house.images.all %}
+                    '{{ image.image.url }}',
+                {% endfor %}
+            ],
+            // Initialize Alpine.js model with values from Django form or defaults
+            bookingForm: {
+                checkin: '{{ booking_form.check_in_date.value|default:"" }}',
+                checkout: '{{ booking_form.check_out_date.value|default:"" }}',
+                guests: '{{ booking_form.number_of_guests.value|default:"1" }}',
+                name: '{{ booking_form.full_name.value|default:"" }}',
+                email: '{{ booking_form.email.value|default:"" }}',
+                phone: '{{ booking_form.phone_number.value|default:"" }}'
+            },
+            
+            get totalNights() {
+                if (this.bookingForm.checkin && this.bookingForm.checkout) {
+                    const checkin = new Date(this.bookingForm.checkin);
+                    const checkout = new Date(this.bookingForm.checkout);
+                    // Ensure checkout is strictly after checkin
+                    if (checkout <= checkin) {
+                        return 0;
+                    }
+                    const timeDiff = checkout.getTime() - checkin.getTime();
+                    const nights = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                    return nights > 0 ? nights : 0;
+                }
+                return 0;
+            },
+            
+            get totalPrice() {
+                // Use the actual price_per_night from Django context
+                const pricePerNight = parseFloat('{{ house.price_per_night|floatformat:2 }}');
+                return (this.totalNights * pricePerNight).toFixed(2); 
+            },
+            
+            nextImage() {
+                this.currentImage = (this.currentImage + 1) % this.images.length;
+            },
+            
+            prevImage() {
+                this.currentImage = this.currentImage === 0 ? this.images.length - 1 : this.currentImage - 1;
+            },
+        }
+    }
+</script>
+</body>
+
+{% endblock content %}

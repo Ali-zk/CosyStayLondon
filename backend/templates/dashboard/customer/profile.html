@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <div class="pb-20">
+        <div class="bg-white shadow-sm max-w-2xl mx-auto">
+            <div class="px-4 py-6">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">My Profile</h1>
+                <div class="flex items-center text-gray-600">
+                    <i class="fa-solid fa-user-circle text-pink-500 mr-2"></i>
+                    <span>Account Settings</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-4 py-6 max-w-2xl mx-auto">
+            
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                <div class="flex items-center space-x-4">
+                    {% if profile_obj.image %}
+                        <div class="w-20 h-20 rounded-full overflow-hidden flex-shrink-0">
+                            <img src="{{ profile_obj.image.url }}" alt="Profile Picture" class="w-full h-full object-cover">
+                        </div>
+                    {% else %}
+                        <div class="w-20 h-20 bg-gradient-to-r from-pink-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fa-solid fa-user text-white text-3xl"></i>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-800">
+                            {% if profile_obj.full_name %}{{ profile_obj.full_name }}{% else %}{{ user_obj.email }}{% endif %}
+                        </h2>
+                        <p class="text-gray-600">Member since {{ user_obj.created_date|date:"Y" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Personal Information</h3>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-user-tag text-pink-500 text-lg w-6"></i>
+                        <div>
+                            <p class="text-sm text-gray-500">Full Name</p>
+                            <p class="text-gray-800 font-medium">{{ profile_obj.full_name|default:"N/A" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-user text-pink-500 text-lg w-6"></i>
+                        <div>
+                            <p class="text-sm text-gray-500">Username</p>
+                            <p class="text-gray-800 font-medium">{{ profile_obj.username|default:"N/A" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-envelope text-pink-500 text-lg w-6"></i>
+                        <div>
+                            <p class="text-sm text-gray-500">Email</p>
+                            <p class="text-gray-800 font-medium">{{ user_obj.email }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-phone text-pink-500 text-lg w-6"></i>
+                        <div>
+                            <p class="text-sm text-gray-500">Phone Number</p>
+                            <p class="text-gray-800 font-medium">{{ profile_obj.phone_number|default:"N/A" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-map-marker-alt text-pink-500 text-lg w-6"></i>
+                        <div>
+                            <p class="text-sm text-gray-500">Address</p>
+                            <p class="text-gray-800 font-medium">{{ profile_obj.address|default:"N/A" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-info-circle text-pink-500 text-lg w-6"></i>
+                        <div>
+                            <p class="text-sm text-gray-500">Description</p>
+                            <p class="text-gray-800 font-medium">{{ profile_obj.description|default:"N/A" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
+                
+                <div class="space-y-3">
+                    <a href="{% url 'dashboard:customer:edit-profile' %}" class="w-full flex items-center space-x-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <i class="fa-solid fa-edit text-pink-500 text-lg"></i>
+                        <span class="text-gray-800 font-medium">Edit Profile</span>
+                        <i class="fa-solid fa-chevron-right text-gray-400 ml-auto"></i>
+                    </a>
+                    <a href="{% url 'dashboard:customer:change-password' %}" class="w-full flex items-center space-x-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <i class="fa-solid fa-lock text-pink-500 text-lg"></i>
+                        <span class="text-gray-800 font-medium">Change Password</span>
+                        <i class="fa-solid fa-chevron-right text-gray-400 ml-auto"></i>
+                    </a>
+                    <a href="{% url 'dashboard:customer:my-bookings' %}" class="w-full flex items-center space-x-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <i class="fa-solid fa-calendar-alt text-pink-500 text-lg"></i>
+                        <span class="text-gray-800 font-medium">My Bookings</span>
+                        <i class="fa-solid fa-chevron-right text-gray-400 ml-auto"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <form method="post" action="{% url 'dashboard:customer:logout' %}" onclick="if(confirm('Are you sure you want to logout?'));">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg transition-colors font-medium flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

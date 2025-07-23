@@ -1,0 +1,98 @@
+{% extends 'dashboard/admin/base_admin.html' %}
+
+{% block title %}{% if object %}Edit Order{% else %}Create Order{% endif %} - Admin Panel{% endblock %}
+
+{% block page_title %}{% if object %}Edit Order{% else %}Create New Order{% endif %}{% endblock %}
+
+{% block main_content %}
+<div class="bg-white rounded-lg shadow p-6">
+    <div class="mb-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-2">
+            {% if object %}Edit Order #{{ object.id }}{% else %}Create New Order{% endif %}
+        </h2>
+        <p class="text-gray-600">{% if object %}Update the order information below.{% else %}Fill out the form below to create a new order.{% endif %}</p>
+    </div>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% for field in form %}
+                <div class="{% if field.name == 'description' or field.name == 'notes' %}md:col-span-2{% endif %}">
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ field.label }}
+                        {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    
+                    {% if field.name == 'description' or field.name == 'notes' %}
+                        <textarea name="{{ field.name }}" id="{{ field.id_for_label }}" 
+                                rows="4" 
+                                class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md {% if field.errors %}border-red-500{% endif %}"
+                                placeholder="{{ field.help_text }}">{{ field.value|default_if_none:'' }}</textarea>
+                    {% elif field.name == 'status' %}
+                        <select name="{{ field.name }}" id="{{ field.id_for_label }}" 
+                                class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm {% if field.errors %}border-red-500{% endif %}">
+                            {% for choice in field.field.choices %}
+                                <option value="{{ choice.0 }}" {% if choice.0 == field.value %}selected{% endif %}>{{ choice.1 }}</option>
+                            {% endfor %}
+                        </select>
+                    {% elif field.field.widget.input_type == 'checkbox' %}
+                        <div class="flex items-center">
+                            <input type="checkbox" name="{{ field.name }}" id="{{ field.id_for_label }}" 
+                                   class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded" 
+                                   {% if field.value %}checked{% endif %}>
+                            <label for="{{ field.id_for_label }}" class="ml-2 block text-sm text-gray-900">
+                                {{ field.help_text }}
+                            </label>
+                        </div>
+                    {% else %}
+                        <input type="{{ field.field.widget.input_type|default:'text' }}" 
+                               name="{{ field.name }}" 
+                               id="{{ field.id_for_label }}" 
+                               value="{{ field.value|default_if_none:'' }}"
+                               class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md {% if field.errors %}border-red-500{% endif %}"
+                               placeholder="{{ field.help_text }}"
+                               {% if field.field.required %}required{% endif %}>
+                    {% endif %}
+                    
+                    {% if field.errors %}
+                        {% for error in field.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    {% if field.help_text %}
+                        <p class="mt-1 text-sm text-gray-500">{{ field.help_text }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if form.non_field_errors %}
+            <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                <div class="flex">
+                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                    <div class="ml-3">
+                        {% for error in form.non_field_errors %}
+                            <p class="text-sm text-red-800">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+            <a href="{% url 'dashboard:admin:order-list' %}" 
+               class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                Cancel
+            </a>
+            <button type="submit" 
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                {% if object %}Update Order{% else %}Create Order{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

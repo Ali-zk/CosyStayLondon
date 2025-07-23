@@ -1,0 +1,54 @@
+{% extends 'dashboard/admin/base_admin.html' %}
+
+{% block title %}Cart Item Form{% endblock %}
+
+{% block page_title %}Cart Item Form{% endblock %}
+
+{% block main_content %}
+    <h2 class="text-2xl font-bold mb-6 text-gray-800">Cart Item</h2>
+    <form method="post" class="bg-white p-8 rounded-lg shadow-xl">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {# Iterate over form fields to render them dynamically #}
+            {% for field in form %}
+                {% if field.widget.input_type != 'hidden' %}
+                    <div>
+                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
+                        {# Render select fields with options manually if needed, otherwise default field rendering is fine #}
+                        {% if field.name == 'cart' %}
+                            <select id="{{ field.id_for_label }}" name="{{ field.name }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5" required>
+                                <option value="">-- Select Cart --</option>
+                                {% for cart_obj in field.field.queryset %} {# Accessing queryset from the field #}
+                                    <option value="{{ cart_obj.pk }}" {% if field.value == cart_obj.pk %}selected{% endif %}>Cart #{{ cart_obj.id }} (User: {{ cart_obj.user.username|default:"N/A" }})</option>
+                                {% endfor %}
+                            </select>
+                        {% elif field.name == 'property_item' %}
+                            <select id="{{ field.id_for_label }}" name="{{ field.name }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5" required>
+                                <option value="">-- Select Property --</option>
+                                {% for prop_obj in field.field.queryset %} {# Accessing queryset from the field #}
+                                    <option value="{{ prop_obj.pk }}" {% if field.value == prop_obj.pk %}selected{% endif %}>{{ prop_obj.title }}</option>
+                                {% endfor %}
+                            </select>
+                        {% else %}
+                            {{ field }} {# Render other fields normally #}
+                        {% endif %}
+
+                        {% if field.help_text %}
+                            <p class="mt-1 text-sm text-gray-500">{{ field.help_text }}</p>
+                        {% endif %}
+                        {% if field.errors %}
+                            <p class="text-red-500 text-xs italic mt-1">
+                                {% for error in field.errors %}{{ error }}{% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <div class="mt-8 flex space-x-4">
+            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200 ease-in-out shadow-md">Save</button>
+            <a href="{% url 'dashboard:admin:cartitem-list' %}" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out shadow-md">Back to List</a>
+        </div>
+    </form>
+{% endblock %}
