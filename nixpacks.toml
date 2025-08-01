@@ -2,20 +2,13 @@
 nixPkgs = ['python312', 'postgresql']
 
 [phases.install]
-cmds = [
-  'python -m venv --copies /opt/venv',
-  '. /opt/venv/bin/activate',
-  'cd backend',
-  'pip install -r requirements.txt'
-]
+cmds = ['pip install -r requirements.txt']
 
 [phases.build]
 cmds = [
-  '. /opt/venv/bin/activate',
-  'cd backend',
-  'python manage.py collectstatic --noinput',
-  'python manage.py migrate --noinput'
+  'cd backend && python manage.py collectstatic --noinput',
+  'cd backend && python manage.py migrate --noinput'
 ]
 
 [start]
-cmd = '. /opt/venv/bin/activate && cd backend && gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT'
+cmd = 'cd backend && gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT'
